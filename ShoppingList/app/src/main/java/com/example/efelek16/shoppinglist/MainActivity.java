@@ -1,5 +1,6 @@
 package com.example.efelek16.shoppinglist;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,12 +11,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,12 +41,13 @@ public class MainActivity extends AppCompatActivity {
         listView = findViewById(R.id.lv);
         sp = findViewById(R.id.spinner);
         spinnerarr.add(new geschaeft("---"));
-
+        registerForContextMenu(listView);
         spadap = new ArrayAdapter<>(this, R.layout.support_simple_spinner_dropdown_item,spinnerarr);
         lvadap = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,lvarr);
         adap = new ArrayAdapter<>(getBaseContext(),android.R.layout.simple_list_item_1,filtered);
         sp.setAdapter(spadap);
         listView.setAdapter(lvadap);
+        //--------------------------------Sorting for the Selected item in the Spinner-----------------------------------
         sp.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -80,15 +85,17 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //--------------------------------OptionsMenu-------------------------------------------------------------
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.optionmenu,menu);
         return super.onCreateOptionsMenu(menu);
     }
-
+    //-----------------------------------When options item selected---------------------------------------------
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int i = item.getItemId();
+        //add new Item to Spinner-------------------------------------------------------------------
         if(i == R.id.geschaeft)
         {
             Context context =  getApplicationContext();
@@ -121,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
             });
             ab.show();
         }
+        //add new item to listview acording to spinner item------------------------------------------------------
         else if(i == R.id.artikel)
         {
 
@@ -150,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
 
                         lvarr.add(new Model(sp.getSelectedItem().toString(),artikel.getEditableText().toString(),count.getEditableText().toString()));
                         lvadap.notifyDataSetChanged();
+                        adap.notifyDataSetChanged();
 
                     }
                 }catch (Exception e) {}
@@ -161,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
+    //-------------------------------------------------untested Contextmenu------------------------------------------------------
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         int viewId = v.getId();
@@ -171,14 +180,70 @@ public class MainActivity extends AppCompatActivity {
         super.onCreateContextMenu(menu, v, menuInfo);
     }
 
+    //-----------------------------if context menue selected------------------------------------------
     @Override
     public boolean onContextItemSelected(MenuItem item) {
+        //remove item from listview-------------------------------------
         if (item.getItemId() == R.id.context_delete) {
             AdapterView.AdapterContextMenuInfo info =
                     (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+
             lvarr.remove(info.position);
-            filtered.remove(info.position);
             lvadap.notifyDataSetChanged();
+            adap.notifyDataSetChanged();
+            return true;
+        }
+        else if (item.getItemId() == R.id.context_change)
+        {
+            AdapterView.AdapterContextMenuInfo info =
+                    (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+
+            Context context =  getApplicationContext();
+            LinearLayout layout = new LinearLayout(context);
+            layout.setOrientation(LinearLayout.VERTICAL);
+
+            EditText shop = new EditText(context);
+            shop.setText(lvarr.get(info.position).getGeschaeft());
+            layout.addView(shop);
+
+            EditText artikel = new EditText(context);
+            artikel.setText(lvarr.get(info.position).eintrag);
+            layout.addView(artikel); // Another add method
+
+            EditText count = new EditText(context);
+            count.setInputType(InputType.TYPE_CLASS_NUMBER);
+            count.setText(lvarr.get(info.position).getStueck());
+            layout.addView(count);
+
+            android.support.v7.app.AlertDialog.Builder ab = new android.support.v7.app.AlertDialog.Builder(this);
+            ab.setTitle("Bearbiten");
+            ab.setView(layout);
+            ab.setNegativeButton("CANCEL", (dialog, which) -> {
+
+            });
+            ab.setPositiveButton("Change", (dialog, which) -> {
+                try {
+                    boolean contains = false;
+                    lvarr.set(info.position, new Model(shop.getEditableText().toString(),artikel.getEditableText().toString(),count.getEditableText().toString()));
+                    for (int i = 0; i < spinnerarr.size();i++)
+                    {
+                        if(spinnerarr.get(i).toString().equals(shop.getEditableText().toString()))
+                        {
+                            contains = true;
+                        }
+                    }
+                    if(!contains)
+                    {
+                        spinnerarr.add(new geschaeft(shop.getEditableText().toString()));
+                        spadap.notifyDataSetChanged();
+                    }
+
+                    adap.notifyDataSetChanged();
+                    lvadap.notifyDataSetChanged();
+                } catch (Exception e) {
+                }
+            });
+            ab.show();
         }
         return super.onContextItemSelected(item);
     }
