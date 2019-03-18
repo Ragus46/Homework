@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ShoppingList</string>
+    <string name="permission_necessary">+</string>
+    <string name="storage_permission_is_encessary_to_wrote_event" />
 </resources>
