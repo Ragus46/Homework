@@ -36,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         listView = findViewById(R.id.lv);
         sp = findViewById(R.id.spinner);
+        spinnerarr.add(new geschaeft("---"));
+
         spadap = new ArrayAdapter<>(this, R.layout.support_simple_spinner_dropdown_item,spinnerarr);
         lvadap = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,lvarr);
         adap = new ArrayAdapter<>(getBaseContext(),android.R.layout.simple_list_item_1,filtered);
@@ -44,16 +46,29 @@ public class MainActivity extends AppCompatActivity {
         sp.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                for (int j = 0; j< lvarr.size();j++)
-                {
-                    if(lvarr.get(j).getGeschaeft().equals(sp.getSelectedItem().toString()))
-                    {
-                        filtered.add(new Model(lvarr.get(j).getGeschaeft(), lvarr.get(j).getEintrag(), lvarr.get(j).getStueck()));
-                    }
+                if(sp.getSelectedItem().toString().equals("---")){
+                    listView.setAdapter(lvadap);
+                    lvadap.notifyDataSetChanged();
                 }
-                listView.setAdapter(adap);
-                adap.notifyDataSetChanged();
+                else{
+                    Set<Model> s = new HashSet<>();
+                    for (int j = 0; j< lvarr.size();j++)
+                    {
+                        if(lvarr.get(j).getGeschaeft().equals(sp.getSelectedItem().toString()))
+                        {
+                            s.add(new Model(lvarr.get(j).getGeschaeft(), lvarr.get(j).getEintrag(), lvarr.get(j).getStueck()));
+                        }
+                    }
+                    filtered.clear();
+                    filtered.addAll(s);
+                    listView.setAdapter(adap);
+                    adap.notifyDataSetChanged();
+
+                }
             }
+
+
+
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -108,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
         }
         else if(i == R.id.artikel)
         {
+
             Context context =  getApplicationContext();
             LinearLayout layout = new LinearLayout(context);
             layout.setOrientation(LinearLayout.VERTICAL);
@@ -131,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
                 try{
                     if(artikel.getEditableText().toString().length()>0&&count.getEditableText().toString().length()>0)
                     {
+
                         lvarr.add(new Model(sp.getSelectedItem().toString(),artikel.getEditableText().toString(),count.getEditableText().toString()));
                         lvadap.notifyDataSetChanged();
 

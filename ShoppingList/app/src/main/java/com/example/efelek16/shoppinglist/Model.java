@@ -41,9 +41,6 @@ public class Model {
 
     @Override
     public String toString() {
-        return "Model{" +
-                "stueck='" + stueck + '\'' +
-                ", eintrag='" + eintrag + '\'' +
-                '}';
+        return eintrag+" "+stueck;
     }
 }
