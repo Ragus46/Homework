@@ -15,11 +15,14 @@ import android.widget.ListView;
 
 import com.google.gson.Gson;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         lv = findViewById(R.id.listview);
         adap = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,lvarr);
         registerForContextMenu(lv);
+
 
     }
 
@@ -75,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
             });
             ab.setPositiveButton("Laden", (dialog, which) -> {
-                    serverTask.execute(entryop.getEditableText().toString(),entryusername.getEditableText().toString());
+                     serverTask.execute(entryop.getEditableText().toString(),entryusername.getEditableText().toString());
 
             });
             ab.show();
@@ -102,7 +106,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    public void filllist(JSONObject jsn) throws JSONException{
+        JSONArray jsonArray = jsn.getJSONArray("data");
+        for(int i = 0; i<jsonArray.length();i++) {
+            JSONObject j = jsonArray.getJSONObject(i);
+            String id = j.getString("id");
+            String name = j.getString("name");
+            String username = j.getString("username");
+            String email = j.getString("email");
+            String phone = j.getString("phone");
+            String price = j.getString("price");
 
+            lvarr.add(new Model(id,name,price,username,email,phone));
+
+
+        }
+        adap.notifyDataSetChanged();
+    }
 
 
 
@@ -120,22 +140,23 @@ public class MainActivity extends AppCompatActivity {
 
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++SERVERTASK+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    public class ServerTask extends AsyncTask<String, Integer, String> {
-        String errormsg = "ERROR";
-        Gson gson = new Gson();
-        List<Model> arr = new ArrayList<>();
+    public class ServerTask extends AsyncTask<String, Void, JSONObject> {
+
         @Override
-        protected void onPostExecute(String s) {
-            System.out.print(s);
-            super.onPostExecute(s);
+        protected void onPostExecute(JSONObject jsonObject) {
+            try{
+                filllist(jsonObject);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            super.onPostExecute(jsonObject);
         }
 
         @Override
-        protected String doInBackground(String... types) {
+        protected JSONObject doInBackground(String... types) {
             String line = "";
             String operation = types[0];
             String username = types[1];
-            String url = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php";
             if(username.length() > 0)
             {
                 if(operation.toLowerCase().equals("get"))
@@ -148,23 +169,15 @@ public class MainActivity extends AppCompatActivity {
                     return postconn(operation,username);
 
                 }
-                else if(operation.toLowerCase().equals("put"))
-                {
-                    putconn(operation,username);
-                    return line;
-                }
-                else if(operation.toLowerCase().equals("delete"))
-                {
-                    deleteconn(operation,username);
-                    return line;
-                }
+
 
             }
             else {
 
                 try {
+                    String finishedline = "";
                     HttpURLConnection connection =
-                            (HttpURLConnection) new URL(url).openConnection();
+                            (HttpURLConnection) new URL("http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=get&username=admin").openConnection();
                     connection.setRequestMethod("GET");
                     connection.setRequestProperty("Content-Type", "application/json");
                     int responseCode = connection.getResponseCode();
@@ -174,17 +187,18 @@ public class MainActivity extends AppCompatActivity {
 
                             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                             while ((line = bufferedReader.readLine()) != null) {
-                                Model json = gson.fromJson(line, Model.class);
-                                arr.add(json);
+                                finishedline +=line;
                             }
                             bufferedReader.close();
-                            return line;
+                            return new JSONObject(finishedline);
 
 
                         } catch (FileNotFoundException e) {
                             e.printStackTrace();
                         } catch(IOException i) {
                             i.printStackTrace();
+                        } catch (JSONException e) {
+
                         }
                     }
 
@@ -193,18 +207,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            return line;
+            return null;
         }
 
 
         //-------------------------------GET POST PUT DELETE WITH USERNAME!------------------------
 
 
-        public String getconn(String op, String username)
+        public JSONObject getconn(String op, String username)
         {
             String line = "";
             String url = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php";
-            String finishedurl = url+"?"+"operation="+op+"&"+"username="+username;
+            String finishedurl = url+"?"+"operation="+op.toLowerCase()+"&"+"username="+username.toLowerCase();
 
             try {
                 HttpURLConnection connection =
@@ -220,14 +234,12 @@ public class MainActivity extends AppCompatActivity {
                         while ((line = bufferedReader.readLine()) != null) {
                             finishedline +=line+"";
 
-
                         }
-                        Model json = gson.fromJson(finishedline,Model.class);
                         bufferedReader.close();
-                        return json.toString();
+                        return new JSONObject(finishedline);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
-                    } catch(IOException i) {
+                    } catch(Exception i) {
                         i.printStackTrace();
                     }
                 }
@@ -235,11 +247,11 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return errormsg;
+            return null;
 
         }
 
-        public String postconn(String op, String username)
+        public JSONObject postconn(String op, String username)
         {
 
             String line = "";
@@ -260,14 +272,13 @@ public class MainActivity extends AppCompatActivity {
                         while ((line = bufferedReader.readLine()) != null) {
                             finishedline += line+"";
                         }
-                        Model json = gson.fromJson(finishedline, Model.class);
                         bufferedReader.close();
-                        return json.toString();
+                        return new JSONObject(finishedline);
 
 
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
-                    } catch(IOException i) {
+                    } catch(Exception i) {
                         i.printStackTrace();
                     }
                 }
@@ -275,81 +286,8 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return errormsg;
+            return null;
         }
-
-        public void putconn(String op, String username)
-        {
-
-            String line = "";
-            String url = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php";
-            String finishedurl = url+"?"+"operation="+op+"&"+"username="+username;
-
-            try {
-                HttpURLConnection connection =
-                        (HttpURLConnection) new URL(finishedurl).openConnection();
-                connection.setRequestMethod("PUT");
-                connection.setRequestProperty("Content-Type", "application/json");
-                int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-
-                    try {
-
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                        while ((line = bufferedReader.readLine()) != null) {
-                            Model json = gson.fromJson(line, Model.class);
-
-                        }
-                        bufferedReader.close();
-
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch(IOException i) {
-                        i.printStackTrace();
-                    }
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void deleteconn(String op, String username)
-        {
-
-            String line = "";
-            String url = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php";
-            String finishedurl = url+"?"+"operation="+op+"&"+"username="+username;
-
-            try {
-                HttpURLConnection connection =
-                        (HttpURLConnection) new URL(finishedurl).openConnection();
-                connection.setRequestMethod("DELETE");
-                connection.setRequestProperty("Content-Type", "application/json");
-                int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-
-                    try {
-
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                        while ((line = bufferedReader.readLine()) != null) {
-                            Model json = gson.fromJson(line, Model.class);
-
-                        }
-                        bufferedReader.close();
-
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch(IOException i) {
-                        i.printStackTrace();
-                    }
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
 
     }
 
