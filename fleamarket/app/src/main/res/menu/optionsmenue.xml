@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_getall"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:title="Getall"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_getforUser"
+        android:title="Get For User"
+        app:showAsAction="never"
+        />
+    <item
+        android:id="@+id/menu_put"
+        android:title="ADD NEW"
+        android:icon="@drawable/ic_add_circle_outline_black_24dp"
+        app:showAsAction="always"
+        />
+
+</menu>
