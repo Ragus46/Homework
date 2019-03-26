@@ -1,13 +1,17 @@
 package com.example.efelek16.fleamarket;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -29,17 +33,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-
+    String username,password;
     ListView lv;
+    static MainActivity mainActivity;
     List<Model> lvarr = new ArrayList<>();
     ArrayAdapter<Model> adap;
-    ServerTask serverTask = new ServerTask();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         lv = findViewById(R.id.listview);
+        readsettings();
         adap = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,lvarr);
+        lv.setAdapter(adap);
+        mainActivity = this;
         registerForContextMenu(lv);
 
 
@@ -54,12 +61,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int i = item.getItemId();
-        if(i ==R.id.menu_getall)
+        if(i ==R.id.menu_preference)
         {
-
+            Intent intent = new Intent(this,prefact.class);
+            startActivity(intent);
         }
-        else if (i==R.id.menu_getforUser)
+        else if (i==R.id.menu_getall)
         {
+            try {
+                execute("http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=get");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            /*
             Context context = getApplicationContext();
             LinearLayout layout = new LinearLayout(context);
             layout.setOrientation(LinearLayout.VERTICAL);
@@ -68,25 +82,58 @@ public class MainActivity extends AppCompatActivity {
             entryusername.setHint("Username");
             layout.addView(entryusername);
 
-            EditText entryop = new EditText(context);
-            entryop.setHint("Operation");
-            layout.addView(entryop);
-
             android.support.v7.app.AlertDialog.Builder ab = new android.support.v7.app.AlertDialog.Builder(this);
-            ab.setTitle("Load for User");
+            ab.setTitle("Load for Admin");
             ab.setView(layout);
             ab.setNegativeButton("Abrechen", (dialog, which) -> {
 
             });
             ab.setPositiveButton("Laden", (dialog, which) -> {
-                     serverTask.execute(entryop.getEditableText().toString(),entryusername.getEditableText().toString());
+                     execute("a","http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=delete&id="+lvarr.get(i);
 
             });
             ab.show();
+            */
         }
         else if (i==R.id.menu_put)
         {
+            Context context = getApplicationContext();
+            LinearLayout layout = new LinearLayout(context);
+            layout.setOrientation(LinearLayout.VERTICAL);
 
+            EditText articlename = new EditText(context);
+            articlename.setHint("ArticleName");
+            layout.addView(articlename);
+            EditText priceentry = new EditText(context);
+            priceentry.setHint("Price");
+            layout.addView(priceentry);
+            EditText entryusername = new EditText(context);
+            entryusername.setHint("Username");
+            layout.addView(entryusername);
+            EditText mailentry = new EditText(context);
+            mailentry.setHint("E-Mail");
+            layout.addView(mailentry);
+            EditText phoneentry = new EditText(context);
+            phoneentry.setHint("Phone");
+            layout.addView(phoneentry);
+
+
+            android.support.v7.app.AlertDialog.Builder ab = new android.support.v7.app.AlertDialog.Builder(this);
+            ab.setTitle("PUT");
+            ab.setView(layout);
+            ab.setNegativeButton("Abrechen", (dialog, which) -> {
+
+            });
+            ab.setPositiveButton("OK", (dialog, which) -> {
+
+                try {
+                    String link = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=add&name="+articlename.getEditableText().toString()+"&price="+priceentry.getEditableText().toString()+"&email="+mailentry.getEditableText().toString()+"&phone="+phoneentry.getEditableText().toString()+"&username="+username+"&password="+password;
+                    execute(link);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+            ab.show();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -102,6 +149,19 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.context_delete)
+        {
+            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+            String LINK = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=delete&id="+lvarr.get(info.position).getId()+"&username="+username+"&password="+password;
+            try{
+                execute(LINK);
+
+            }catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+
+        }
         return super.onContextItemSelected(item);
     }
 
@@ -121,175 +181,27 @@ public class MainActivity extends AppCompatActivity {
 
 
         }
+
         adap.notifyDataSetChanged();
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++SERVERTASK+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    public class ServerTask extends AsyncTask<String, Void, JSONObject> {
-
-        @Override
-        protected void onPostExecute(JSONObject jsonObject) {
-            try{
-                filllist(jsonObject);
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            super.onPostExecute(jsonObject);
-        }
-
-        @Override
-        protected JSONObject doInBackground(String... types) {
-            String line = "";
-            String operation = types[0];
-            String username = types[1];
-            if(username.length() > 0)
-            {
-                if(operation.toLowerCase().equals("get"))
-                {
-                    return getconn(operation,username);
-
-                }
-                else if(operation.toLowerCase().equals("post"))
-                {
-                    return postconn(operation,username);
-
-                }
-
-
-            }
-            else {
-
-                try {
-                    String finishedline = "";
-                    HttpURLConnection connection =
-                            (HttpURLConnection) new URL("http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=get&username=admin").openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.setRequestProperty("Content-Type", "application/json");
-                    int responseCode = connection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-
-                        try {
-
-                            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                            while ((line = bufferedReader.readLine()) != null) {
-                                finishedline +=line;
-                            }
-                            bufferedReader.close();
-                            return new JSONObject(finishedline);
-
-
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        } catch(IOException i) {
-                            i.printStackTrace();
-                        } catch (JSONException e) {
-
-                        }
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return null;
-        }
-
-
-        //-------------------------------GET POST PUT DELETE WITH USERNAME!------------------------
-
-
-        public JSONObject getconn(String op, String username)
-        {
-            String line = "";
-            String url = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php";
-            String finishedurl = url+"?"+"operation="+op.toLowerCase()+"&"+"username="+username.toLowerCase();
-
-            try {
-                HttpURLConnection connection =
-                        (HttpURLConnection) new URL(finishedurl).openConnection();
-                connection.setRequestMethod("GET");
-                connection.setRequestProperty("Content-Type", "application/json");
-                int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    String finishedline = "";
-                    try {
-
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                        while ((line = bufferedReader.readLine()) != null) {
-                            finishedline +=line+"";
-
-                        }
-                        bufferedReader.close();
-                        return new JSONObject(finishedline);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch(Exception i) {
-                        i.printStackTrace();
-                    }
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-
-        }
-
-        public JSONObject postconn(String op, String username)
-        {
-
-            String line = "";
-            String url = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php";
-            String finishedurl = url+"?"+"operation="+op+"&"+"username="+username;
-
-            try {
-                HttpURLConnection connection =
-                        (HttpURLConnection) new URL(finishedurl).openConnection();
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                String finishedline = "";
-                    try {
-
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                        while ((line = bufferedReader.readLine()) != null) {
-                            finishedline += line+"";
-                        }
-                        bufferedReader.close();
-                        return new JSONObject(finishedline);
-
-
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch(Exception i) {
-                        i.printStackTrace();
-                    }
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
+    private void execute(String link) throws Exception
+    {
+        Servertask servertask = new Servertask();
+        servertask.execute("a",link);
     }
+
+    public static MainActivity getInstance(){return mainActivity;}
+
+        private void readsettings()
+        {
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            username = preferences.getString("username","");
+            password = preferences.getString("password","");
+        }
+
+
+
 
 }
 

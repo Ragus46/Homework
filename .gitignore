@@ -20,3 +20,12 @@ fleamarket/app/src/main/res/xml/networksecurityconfig.xml
 fleamarket/build.gradle
 fleamarket/gradle/wrapper/gradle-wrapper.properties
 fleamarket/gradle/wrapper/gradle-wrapper.properties
+fleamarket/gradlew
+fleamarket/build.gradle
+fleamarket/app/src/main/res/values/colors.xml
+fleamarket/app/src/main/res/drawable/ic_add_circle_outline_black_24dp.xml
+fleamarket/app/build.gradle
+fleamarket/.idea/runConfigurations.xml
+fleamarket/.idea/modules.xml
+fleamarket/.idea/misc.xml
+fleamarket/.idea/gradle.xml
