@@ -73,27 +73,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            /*
-            Context context = getApplicationContext();
-            LinearLayout layout = new LinearLayout(context);
-            layout.setOrientation(LinearLayout.VERTICAL);
 
-            EditText entryusername = new EditText(context);
-            entryusername.setHint("Username");
-            layout.addView(entryusername);
-
-            android.support.v7.app.AlertDialog.Builder ab = new android.support.v7.app.AlertDialog.Builder(this);
-            ab.setTitle("Load for Admin");
-            ab.setView(layout);
-            ab.setNegativeButton("Abrechen", (dialog, which) -> {
-
-            });
-            ab.setPositiveButton("Laden", (dialog, which) -> {
-                     execute("a","http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=delete&id="+lvarr.get(i);
-
-            });
-            ab.show();
-            */
         }
         else if (i==R.id.menu_put)
         {
