@@ -50,3 +50,8 @@ ShoppingList/app/src/main/res/drawable/ic_notifications_black_24dp.xml
 ShoppingList/app/build.gradle
 ShoppingList/.idea/caches/build_file_checksums.ser
 ShoppingList/.idea/assetWizardSettings.xml
+ShoppingList/app/src/main/res/drawable/ic_settings_black_24dp.xml
+ShoppingList/app/build.gradle
+ShoppingList/.idea/caches/build_file_checksums.ser
+ShoppingList/.idea/caches/build_file_checksums.ser
+*.gradle

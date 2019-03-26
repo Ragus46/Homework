@@ -4,14 +4,19 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -67,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     LocationManager locationManager;
     LocationListener locationListener;
     Location actlocation;
+    boolean checkboxvalue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,8 +84,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         spinnerarr.add(new Store("---", null));
         registerSystemService();
         checkPermissionGPS();
-
         registerForContextMenu(listView);
+        getPreferences();
         spadap = new ArrayAdapter<>(this, R.layout.support_simple_spinner_dropdown_item, spinnerarr);
         lvadap = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, lvarr);
         adap = new ArrayAdapter<>(getBaseContext(), android.R.layout.simple_list_item_1, filtered);
@@ -203,10 +209,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             EditText geschaeft = new EditText(context);
             geschaeft.setHint("Neues Geschäft");
             layout.addView(geschaeft); // Another add method
+
             //longtitude
             TextView longtitudetext = new TextView(context);
             longtitudetext.setText("Lontitude");
             layout.addView(longtitudetext);
+
             EditText longtitude = new EditText(context);
             longtitude.setText(actlocation.getLongitude() + "");
             layout.addView(longtitude); // Another add method
@@ -214,6 +222,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             TextView latitude = new TextView(context);
             latitude.setText("Latitude");
             layout.addView(latitude);
+
             EditText Latitude = new EditText(context);
             Latitude.setText(actlocation.getLatitude() + "");
             layout.addView(Latitude); // Another add method
@@ -221,13 +230,16 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             TextView altitudetext = new TextView(context);
             altitudetext.setText("Altitude");
             layout.addView(altitudetext);
+
             EditText altitude = new EditText(context);
             altitude.setText(actlocation.getAltitude() + "");
             layout.addView(altitude); // Another add method
+
             //speed
             TextView speedtext = new TextView(context);
             speedtext.setText("Speed");
             layout.addView(speedtext);
+
             EditText speed = new EditText(context);
             speed.setText(actlocation.getSpeed() + "");
             layout.addView(speed); // Another add method
@@ -241,14 +253,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             ab.setPositiveButton("Speichern", (dialog, which) -> {
                 try {
                     if (geschaeft.getEditableText().toString().length() > 0) {
-                        Location l = new Location("");
-                        l.setLongitude(Double.parseDouble(longtitude.getEditableText().toString()));
-                        l.setLatitude(Double.parseDouble(latitude.getEditableText().toString()));
-                        l.setAltitude(Double.parseDouble(altitude.getEditableText().toString()));
-                        l.setSpeed(Float.parseFloat(speed.getEditableText().toString()));
+                        Location loc =  setlocationfinal(longtitude,Latitude,altitude,speed);
 
-                        spinnerarr.add(new Store(geschaeft.getEditableText().toString(), l));
 
+                        spinnerarr.add(new Store(geschaeft.getEditableText().toString(), loc));
                         Set<Store> s = new HashSet<>();
                         s.addAll(spinnerarr);
                         spinnerarr.clear();
@@ -300,6 +308,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             ab.show();
 
 
+        }
+        else if(i == R.id.preferences)
+        {
+            Intent intent = new Intent(this, ActivityPref.class);
+            startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -427,7 +440,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == RQ_ACCESS_FINE_LOCATION) {
-
+            //LOCATION+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
             if (requestCode != RQ_ACCESS_FINE_LOCATION) return;
             if (grantResults.length > 0 &&
@@ -436,6 +449,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             } else {
                 gpsGranted();
             }
+            //PERMISSION TO WRITE ON SDCARD+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         } else if (requestCode == PERMISSION_REQUEST_CODE) {
             if (permissions.length > 0 && grantResults.length > 0) {
 
@@ -509,13 +523,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
     public void makeToast(String s) {
-        Toast.makeText(this, s, Toast.LENGTH_LONG);
+        Toast.makeText(this, s, Toast.LENGTH_LONG).show();
     }
 
     @Override
     public void onLocationChanged(Location location) {
         actlocation = location;
-
+        boolean shophasarticel = false;
         int selectedItemId = (int) sp.getSelectedItemId();
         if(selectedItemId == 0)
         {
@@ -523,11 +537,21 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         }
         Store selectedStore = spinnerarr.get(selectedItemId);
         Location storeLocation = selectedStore.getLocation();
-
-        if (actlocation.distanceTo(storeLocation) < 500F) {
-
+        for(Model m:lvarr)
+        {
+            if(m.getGeschaeft().equals(selectedStore.getName()))
+            {
+                shophasarticel = true;
+            }
         }
-
+        if(checkboxvalue)
+        {
+            makeToast("CheckBoxValue is True");
+            if (actlocation.distanceTo(storeLocation) < 500F && shophasarticel) {
+                NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
+                notificationManagerCompat.notify(0,mBuilder.build());
+            }
+        }
     }
 
     @Override
@@ -544,11 +568,26 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     public void onProviderDisabled(String provider) {
 
     }
-/*
+
     NotificationCompat.Builder mBuilder =
             new NotificationCompat.Builder(this)
                     .setSmallIcon(R.drawable.ic_notifications_black_24dp)
                     .setContentTitle("Notification for Location")
                     .setContentText("Hello a shop is near to your actual Location! :)");
-                    */
+
+
+    public Location setlocationfinal(EditText longtitude,EditText latitude, EditText altitude, EditText speed) {
+        Location l = new Location(LocationManager.GPS_PROVIDER);
+        l.setLongitude(Double.parseDouble(longtitude.getText().toString()));
+        l.setLatitude(Double.parseDouble(latitude.getText().toString()));
+        l.setAltitude(Double.parseDouble(altitude.getText().toString()));
+        l.setSpeed(Float.parseFloat(speed.getText().toString()));
+        return l;
+    }
+
+    private void getPreferences(){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+         checkboxvalue = preferences.getBoolean("check_box_preference_1",false);
+    }
+
 }

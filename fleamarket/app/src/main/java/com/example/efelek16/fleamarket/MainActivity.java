@@ -37,11 +37,12 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     SearchView sv;
-    String username,password;
+    String username, password;
     ListView lv;
     static MainActivity mainActivity;
     List<Model> lvarr = new ArrayList<>();
     ArrayAdapter<Model> adap;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         lv = findViewById(R.id.listview);
         sv = findViewById(R.id.searchview);
         readsettings();
-        adap = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,lvarr);
+        adap = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, lvarr);
         lv.setAdapter(adap);
         mainActivity = this;
         registerForContextMenu(lv);
@@ -63,24 +64,20 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextChange(String newText) {
 
-                    List<Model>filtered = new ArrayList<>();
-                    for(Model c:lvarr)
-                    {
-                        if(c.toString().toLowerCase().contains(newText.toLowerCase()))
-                        {
-                            filtered.add(c);
-                        }
+                List<Model> filtered = new ArrayList<>();
+                for (Model c : lvarr) {
+                    if (c.toString().toLowerCase().contains(newText.toLowerCase())) {
+                        filtered.add(c);
                     }
-                    ArrayAdapter<Model> ad = new ArrayAdapter(MainActivity.this,android.R.layout.simple_list_item_1,filtered);
-                    lv.setAdapter(ad);
-                    if(filtered.size()==0)
-                    {
-                        Context context = getApplicationContext();
-                        Toast toast = Toast.makeText(context, "Suche nicht gefunden", Toast.LENGTH_LONG);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
-                        toast.show();
-                    }
-
+                }
+                ArrayAdapter<Model> ad = new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_1, filtered);
+                lv.setAdapter(ad);
+                if (filtered.size() == 0) {
+                    Context context = getApplicationContext();
+                    Toast toast = Toast.makeText(context, "Suche nicht gefunden", Toast.LENGTH_LONG);
+                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    toast.show();
+                }
 
 
                 return false;
@@ -92,33 +89,28 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.optionsmenue,menu);
+        getMenuInflater().inflate(R.menu.optionsmenue, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
-    public void getall()
-    {
+    public void getall() {
         try {
             execute("http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=get");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int i = item.getItemId();
-        if(i ==R.id.menu_preference)
-        {
-            Intent intent = new Intent(this,prefact.class);
+        if (i == R.id.menu_preference) {
+            Intent intent = new Intent(this, prefact.class);
             startActivity(intent);
-        }
-        else if (i==R.id.menu_getall)
-        {
-           getall();
+        } else if (i == R.id.menu_getall) {
+            getall();
 
-        }
-        else if (i==R.id.menu_put)
-        {
+        } else if (i == R.id.menu_put) {
             Context context = getApplicationContext();
             LinearLayout layout = new LinearLayout(context);
             layout.setOrientation(LinearLayout.VERTICAL);
@@ -149,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
             ab.setPositiveButton("OK", (dialog, which) -> {
 
                 try {
-                    String link = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=add&name="+articlename.getEditableText().toString()+"&price="+priceentry.getEditableText().toString()+"&email="+mailentry.getEditableText().toString()+"&phone="+phoneentry.getEditableText().toString()+"&username="+username+"&password="+password;
+                    String link = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=add&name=" + articlename.getEditableText().toString() + "&price=" + priceentry.getEditableText().toString() + "&email=" + mailentry.getEditableText().toString() + "&phone=" + phoneentry.getEditableText().toString() + "&username=" + username + "&password=" + password;
                     execute(link);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -164,23 +156,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         int viewId = v.getId();
-        if(viewId==R.id.listview){
-            getMenuInflater().inflate(R.menu.contextmenu,menu);
+        if (viewId == R.id.listview) {
+            getMenuInflater().inflate(R.menu.contextmenu, menu);
         }
         super.onCreateContextMenu(menu, v, menuInfo);
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        if(item.getItemId() == R.id.context_delete)
-        {
+        if (item.getItemId() == R.id.context_delete) {
             AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-            String LINK = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=delete&id="+lvarr.get(info.position).getId()+"&username="+username+"&password="+password;
-            try{
+            String LINK = "http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=delete&id=" + lvarr.get(info.position).getId() + "&username=" + username + "&password=" + password;
+            try {
                 execute(LINK);
 
-            }catch (Exception e)
-            {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             getall();
@@ -190,9 +180,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void filllist(JSONObject jsn) throws JSONException{
+    public void filllist(JSONObject jsn) throws JSONException {
         JSONArray jsonArray = jsn.getJSONArray("data");
-        for(int i = 0; i<jsonArray.length();i++) {
+        for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject j = jsonArray.getJSONObject(i);
             String id = j.getString("id");
             String name = j.getString("name");
@@ -201,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
             String phone = j.getString("phone");
             String price = j.getString("price");
 
-            lvarr.add(new Model(id,name,price,username,email,phone));
+            lvarr.add(new Model(id, name, price, username, email, phone));
 
 
         }
@@ -209,22 +199,20 @@ public class MainActivity extends AppCompatActivity {
         adap.notifyDataSetChanged();
     }
 
-    private void execute(String link) throws Exception
-    {
+    private void execute(String link) throws Exception {
         Servertask servertask = new Servertask();
-        servertask.execute("a",link);
+        servertask.execute("a", link);
     }
 
-    public static MainActivity getInstance(){return mainActivity;}
+    public static MainActivity getInstance() {
+        return mainActivity;
+    }
 
-        private void readsettings()
-        {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            username = preferences.getString("username","");
-            password = preferences.getString("password","");
-        }
-
-
+    private void readsettings() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        username = preferences.getString("username", "");
+        password = preferences.getString("password", "");
+    }
 
 
 }

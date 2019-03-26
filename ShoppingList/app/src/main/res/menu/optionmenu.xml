@@ -13,5 +13,11 @@
         android:title="Neues Geschäft hinzufügen"
         app:showAsAction="never"
         />
+    <item
+        android:id="@+id/preferences"
+        android:title="Einstellungen"
+        android:icon="@drawable/ic_settings_black_24dp"
+        app:showAsAction="always"
+        />
 
 </menu>
