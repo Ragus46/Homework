@@ -8,6 +8,7 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.ContextMenu;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,6 +17,8 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.SearchView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
@@ -33,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    SearchView sv;
     String username,password;
     ListView lv;
     static MainActivity mainActivity;
@@ -43,11 +47,45 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         lv = findViewById(R.id.listview);
+        sv = findViewById(R.id.searchview);
         readsettings();
         adap = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,lvarr);
         lv.setAdapter(adap);
         mainActivity = this;
         registerForContextMenu(lv);
+
+        sv.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+
+                    List<Model>filtered = new ArrayList<>();
+                    for(Model c:lvarr)
+                    {
+                        if(c.toString().toLowerCase().contains(newText.toLowerCase()))
+                        {
+                            filtered.add(c);
+                        }
+                    }
+                    ArrayAdapter<Model> ad = new ArrayAdapter(MainActivity.this,android.R.layout.simple_list_item_1,filtered);
+                    lv.setAdapter(ad);
+                    if(filtered.size()==0)
+                    {
+                        Context context = getApplicationContext();
+                        Toast toast = Toast.makeText(context, "Suche nicht gefunden", Toast.LENGTH_LONG);
+                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        toast.show();
+                    }
+
+
+
+                return false;
+            }
+        });
 
 
     }
@@ -58,6 +96,14 @@ public class MainActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
+    public void getall()
+    {
+        try {
+            execute("http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=get");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int i = item.getItemId();
@@ -68,11 +114,7 @@ public class MainActivity extends AppCompatActivity {
         }
         else if (i==R.id.menu_getall)
         {
-            try {
-                execute("http://eaustria.no-ip.biz/flohmarkt/flohmarkt.php?operation=get");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+           getall();
 
         }
         else if (i==R.id.menu_put)
@@ -112,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                getall();
             });
             ab.show();
         }
@@ -140,6 +183,7 @@ public class MainActivity extends AppCompatActivity {
             {
                 e.printStackTrace();
             }
+            getall();
 
         }
         return super.onContextItemSelected(item);
