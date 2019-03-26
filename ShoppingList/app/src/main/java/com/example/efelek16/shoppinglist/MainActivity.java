@@ -1,9 +1,13 @@
 package com.example.efelek16.shoppinglist;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -25,6 +29,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
@@ -33,7 +39,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -46,19 +51,22 @@ import java.util.Set;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LocationListener {
     ListView listView;
     Spinner sp;
-    List<geschaeft> spinnerarr = new ArrayList<>();
+    List<Store> spinnerarr = new ArrayList<>();
     List<Model> lvarr = new ArrayList<>();
     ArrayAdapter<Model> lvadap;
-    ArrayAdapter<geschaeft> spadap;
+    ArrayAdapter<Store> spadap;
     ArrayAdapter<Model> adap;
     List<Model> filtered = new ArrayList<>();
     Button saving;
     String filename = "shoppinglist.json";
     File writefile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), filename);
     Gson gson = new Gson();
+    LocationManager locationManager;
+    LocationListener locationListener;
+    Location actlocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +75,10 @@ public class MainActivity extends AppCompatActivity {
         listView = findViewById(R.id.lv);
         sp = findViewById(R.id.spinner);
         saving = findViewById(R.id.save);
-        spinnerarr.add(new geschaeft("---"));
+        spinnerarr.add(new Store("---", null));
+        registerSystemService();
+        checkPermissionGPS();
+
         registerForContextMenu(listView);
         spadap = new ArrayAdapter<>(this, R.layout.support_simple_spinner_dropdown_item, spinnerarr);
         lvadap = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, lvarr);
@@ -97,7 +108,9 @@ public class MainActivity extends AppCompatActivity {
                     Set<Model> s = new HashSet<>();
                     for (int j = 0; j < lvarr.size(); j++) {
                         if (lvarr.get(j).getGeschaeft().equals(sp.getSelectedItem().toString())) {
-                            s.add(new Model(lvarr.get(j).getGeschaeft(), lvarr.get(j).getEintrag(), lvarr.get(j).getStueck()));
+                            s.add(new Model(lvarr.get(j).getGeschaeft(),
+                                    lvarr.get(j).getEintrag(),
+                                    lvarr.get(j).getStueck(), spinnerarr.get((int) sp.getSelectedItemId()).getLocation()));
                         }
                     }
                     filtered.clear();
@@ -129,6 +142,36 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
+    //END ONCREATE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    //Location Manager------------------------------------------------------------
+    private void registerSystemService() {
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+    }
+
+    private static final int RQ_ACCESS_FINE_LOCATION = 123;
+    private boolean isGpsAllowed = false;
+
+    //checkPermissionGPS---------------------------------------------------------------
+    private void checkPermissionGPS() {
+        Log.d("Permission", "checkPermissionGPS");
+        String permission = Manifest.permission.ACCESS_FINE_LOCATION;
+        if (ActivityCompat.checkSelfPermission(this, permission)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{permission},
+                    RQ_ACCESS_FINE_LOCATION);
+        } else {
+            gpsGranted();
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+        }
+    }
+
+    //gpsisGranted()-------------------------------------------------------
+    private void gpsGranted() {
+        Log.d("gpsgranted", "gps permission granted!");
+        isGpsAllowed = true;
+    }
 
     //---------------------------CHECK IF EXTERNAL STORAGE IS READ - & WRITEABLE--------------------------------------------
     public boolean isExternalStorageWritable() {
@@ -158,8 +201,36 @@ public class MainActivity extends AppCompatActivity {
             layout.setOrientation(LinearLayout.VERTICAL);
 
             EditText geschaeft = new EditText(context);
-            geschaeft.setHint("Neuer Artikel");
+            geschaeft.setHint("Neues Geschäft");
             layout.addView(geschaeft); // Another add method
+            //longtitude
+            TextView longtitudetext = new TextView(context);
+            longtitudetext.setText("Lontitude");
+            layout.addView(longtitudetext);
+            EditText longtitude = new EditText(context);
+            longtitude.setText(actlocation.getLongitude() + "");
+            layout.addView(longtitude); // Another add method
+            //latitude
+            TextView latitude = new TextView(context);
+            latitude.setText("Latitude");
+            layout.addView(latitude);
+            EditText Latitude = new EditText(context);
+            Latitude.setText(actlocation.getLatitude() + "");
+            layout.addView(Latitude); // Another add method
+            //Altitude
+            TextView altitudetext = new TextView(context);
+            altitudetext.setText("Altitude");
+            layout.addView(altitudetext);
+            EditText altitude = new EditText(context);
+            altitude.setText(actlocation.getAltitude() + "");
+            layout.addView(altitude); // Another add method
+            //speed
+            TextView speedtext = new TextView(context);
+            speedtext.setText("Speed");
+            layout.addView(speedtext);
+            EditText speed = new EditText(context);
+            speed.setText(actlocation.getSpeed() + "");
+            layout.addView(speed); // Another add method
 
             android.support.v7.app.AlertDialog.Builder ab = new android.support.v7.app.AlertDialog.Builder(this);
             ab.setTitle("Neues Geschäft Hinzufügen");
@@ -170,9 +241,15 @@ public class MainActivity extends AppCompatActivity {
             ab.setPositiveButton("Speichern", (dialog, which) -> {
                 try {
                     if (geschaeft.getEditableText().toString().length() > 0) {
-                        spinnerarr.add(new geschaeft(geschaeft.getEditableText().toString()));
+                        Location l = new Location("");
+                        l.setLongitude(Double.parseDouble(longtitude.getEditableText().toString()));
+                        l.setLatitude(Double.parseDouble(latitude.getEditableText().toString()));
+                        l.setAltitude(Double.parseDouble(altitude.getEditableText().toString()));
+                        l.setSpeed(Float.parseFloat(speed.getEditableText().toString()));
 
-                        Set<geschaeft> s = new HashSet<>();
+                        spinnerarr.add(new Store(geschaeft.getEditableText().toString(), l));
+
+                        Set<Store> s = new HashSet<>();
                         s.addAll(spinnerarr);
                         spinnerarr.clear();
                         spinnerarr.addAll(s);
@@ -209,7 +286,10 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     if (artikel.getEditableText().toString().length() > 0 && count.getEditableText().toString().length() > 0) {
 
-                        lvarr.add(new Model(sp.getSelectedItem().toString(), artikel.getEditableText().toString(), count.getEditableText().toString()));
+                        lvarr.add(new Model(sp.getSelectedItem().toString(),
+                                artikel.getEditableText().toString(),
+                                count.getEditableText().toString(),
+                                spinnerarr.get((int) sp.getSelectedItemId()).getLocation()));
                         lvadap.notifyDataSetChanged();
                         adap.notifyDataSetChanged();
 
@@ -278,14 +358,19 @@ public class MainActivity extends AppCompatActivity {
             ab.setPositiveButton("Change", (dialog, which) -> {
                 try {
                     boolean contains = false;
-                    lvarr.set(info.position, new Model(shop.getEditableText().toString(), artikel.getEditableText().toString(), count.getEditableText().toString()));
+                    lvarr.set(info.position, new Model(shop.getEditableText().toString(),
+                            artikel.getEditableText().toString(),
+                            count.getEditableText().toString()
+                            , spinnerarr.get((int) sp.getSelectedItemId()).getLocation()));
+
+
                     for (int i = 0; i < spinnerarr.size(); i++) {
                         if (spinnerarr.get(i).toString().equals(shop.getEditableText().toString())) {
                             contains = true;
                         }
                     }
                     if (!contains) {
-                        spinnerarr.add(new geschaeft(shop.getEditableText().toString()));
+                        spinnerarr.add(new Store(shop.getEditableText().toString(), actlocation));
                         spadap.notifyDataSetChanged();
                     }
 
@@ -341,8 +426,17 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == RQ_ACCESS_FINE_LOCATION) {
 
-        if (requestCode == PERMISSION_REQUEST_CODE) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            if (requestCode != RQ_ACCESS_FINE_LOCATION) return;
+            if (grantResults.length > 0 &&
+                    grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Permissiondenied", Toast.LENGTH_LONG).show();
+            } else {
+                gpsGranted();
+            }
+        } else if (requestCode == PERMISSION_REQUEST_CODE) {
             if (permissions.length > 0 && grantResults.length > 0) {
 
                 boolean flag = true;
@@ -373,8 +467,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 Writer writer = new BufferedWriter(new FileWriter(writefile));
                 Gson gson = new Gson();
-                for (int i = 0; i< lvarr.size(); i++)
-                {
+                for (int i = 0; i < lvarr.size(); i++) {
                     String json = gson.toJson(lvarr.get(i));
                     writer.write(json);
                     writer.flush();
@@ -388,32 +481,74 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void writeorread(){
-        if (lvarr.size()>0)
-        {
+    public void writeorread() {
+        if (lvarr.size() > 0) {
             write();
-        }
-        else {
+        } else {
             reader();
         }
     }
 
     public void reader() {
         try {
-           FileInputStream fis = new FileInputStream(writefile);
-           BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis));
+            FileInputStream fis = new FileInputStream(writefile);
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis));
             String line = "";
             while ((line = bufferedReader.readLine()) != null) {
                 Model json = gson.fromJson(line, Model.class);
-                spinnerarr.add(new geschaeft(json.getGeschaeft()));
+                spinnerarr.add(new Store(json.getGeschaeft(), json.getLoc()));
                 lvarr.add(json);
             }
             bufferedReader.close();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        } catch(IOException i) {
+        } catch (IOException i) {
             i.printStackTrace();
         }
     }
+
+    public void makeToast(String s) {
+        Toast.makeText(this, s, Toast.LENGTH_LONG);
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        actlocation = location;
+
+        int selectedItemId = (int) sp.getSelectedItemId();
+        if(selectedItemId == 0)
+        {
+            spinnerarr.set(0,new Store("---",actlocation));
+        }
+        Store selectedStore = spinnerarr.get(selectedItemId);
+        Location storeLocation = selectedStore.getLocation();
+
+        if (actlocation.distanceTo(storeLocation) < 500F) {
+
+        }
+
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
+    }
+/*
+    NotificationCompat.Builder mBuilder =
+            new NotificationCompat.Builder(this)
+                    .setSmallIcon(R.drawable.ic_notifications_black_24dp)
+                    .setContentTitle("Notification for Location")
+                    .setContentText("Hello a shop is near to your actual Location! :)");
+                    */
 }

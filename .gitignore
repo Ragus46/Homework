@@ -46,3 +46,7 @@ ShoppingList/.idea/runConfigurations.xml
 ShoppingList/.idea/vcs.xml
 ShoppingList/build.gradle
 fleamarket/app/src/main/res/layout/activity_main.xml
+ShoppingList/app/src/main/res/drawable/ic_notifications_black_24dp.xml
+ShoppingList/app/build.gradle
+ShoppingList/.idea/caches/build_file_checksums.ser
+ShoppingList/.idea/assetWizardSettings.xml
