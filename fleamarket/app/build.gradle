@@ -23,7 +23,7 @@ android {
     buildToolsVersion '28.0.3'
 }
 configurations.all {
-    resolutionStrategy.eachDependency {  details ->
+    resolutionStrategy.eachDependency { details ->
         def requested = details.requested
         if (requested.group == "com.android.support") {
             if (!requested.name.startsWith("multidex")) {
@@ -41,4 +41,5 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation 'com.google.android.gms:play-services-maps:16.1.0'
 }

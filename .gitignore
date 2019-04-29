@@ -55,3 +55,7 @@ ShoppingList/app/build.gradle
 ShoppingList/.idea/caches/build_file_checksums.ser
 ShoppingList/.idea/caches/build_file_checksums.ser
 *.gradle
+fleamarket.zip
+fleamarket/app/build.gradle
+ShoppingList.zip
+fleamarket/app/src/main/res/menu/contextmenu.xml

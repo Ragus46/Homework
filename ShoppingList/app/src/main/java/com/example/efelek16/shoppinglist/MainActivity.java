@@ -576,7 +576,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                     .setContentText("Hello a shop is near to your actual Location! :)");
 
 
-    public Location setlocationfinal(EditText longtitude,EditText latitude, EditText altitude, EditText speed) {
+    private Location setlocationfinal(EditText longtitude,EditText latitude, EditText altitude, EditText speed) {
         Location l = new Location(LocationManager.GPS_PROVIDER);
         l.setLongitude(Double.parseDouble(longtitude.getText().toString()));
         l.setLatitude(Double.parseDouble(latitude.getText().toString()));

@@ -1,5 +1,7 @@
 package com.example.efelek16.fleamarket;
 
+import android.location.Location;
+
 /**
  * Created by efelek16 on 19.03.2019.
  */
@@ -11,10 +13,9 @@ public class Model {
     private String username;
     private String email;
     private String phone;
+    Location location;
 
-    public Model(String id,
-                 String name, String price, String username,
-                  String email, String phone) {
+    public Model(String id, String name, String price, String username, String email, String phone) {
         this.id = id;
         this.name = name;
         this.price = price;
@@ -23,20 +24,14 @@ public class Model {
         this.phone = phone;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
+    public Model(String id, String name, String price, String username, String email, String phone, Location location) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.username = username;
         this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
         this.phone = phone;
+        this.location = location;
     }
 
     public String getId() {
@@ -70,6 +65,31 @@ public class Model {
     public void setUsername(String username) {
         this.username = username;
     }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
+    }
+
 
     @Override
     public String toString() {
